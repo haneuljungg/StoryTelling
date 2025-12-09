@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Story UI — 순차 스토리 진행</title>
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: #000;
+    font-family: 'Times New Roman', serif;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .canvas {
+    width: 900px;
+    height: 600px;
+    background-color: #000;
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .story-box {
+    position: absolute;
+    bottom: 100px;
+    left: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 10;
+  }
+
+  .circle-btn {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform .15s ease, background .15s ease;
+  }
+  .circle-btn:hover { transform: translateY(-4px); background: rgba(255,255,255,0.06); }
+  .circle-btn img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+
+  .story-text {
+    color: white;
+    font-size: 80px;
+    text-shadow: 0 0 12px rgba(0,0,0,0.5);
+    margin-left: 4px;
+  }
+
+  .top-left-image {
+    position: absolute;
+    top: -10px;
+    left: 5px;
+    width: 400px;
+    height: auto;
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  .clear-btn {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 15;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .clear-btn:hover { background: rgba(255,255,255,0.15); }
+
+  .ring {
+    position: absolute;
+    width: 260px;
+    height: 260px;
+    border: 3px solid white;
+    border-radius: 50%;
+    opacity: 1;
+    animation: shrinkFade 8s forwards;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+    text-align: center;
+    z-index: 12;
+  }
+
+  @keyframes shrinkFade {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(0.2); opacity: 0; }
+  }
+
+  .particle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: white;
+    border-radius: 50%;
+    opacity: 1;
+    pointer-events: none;
+    animation: particleMove 1.5s ease-out forwards;
+    z-index: 11;
+  }
+  @keyframes particleMove {
+    0% { transform: translate(0,0) scale(1); opacity: 1; }
+    100% { transform: translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; }
+  }
+
+  #right-text-box {
+    position: absolute;
+    right: -170px;
+    top: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 20;
+    width: 260px;
+  }
+
+  #left-text-box {
+    position: absolute;
+    left: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 380px;
+    overflow: hidden;
+    z-index: 20;
+    width: 360px;
+  }
+
+  .burst-line {
+    color: white;
+    font-size: 12px;
+    opacity: 0;
+    animation: fadeIn 0.8s forwards;
+    white-space: nowrap;
+  }
+
+  @keyframes fadeIn {
+    0% { opacity: 0; transform: translateY(6px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  .bottom-right-image {
+    position: absolute;
+    width: 23px;
+    height: auto;
+    bottom: 10px;
+    right: 40px;
+    z-index: 30;
+  }
+</style>
+</head>
+<body>
+
+<div class="canvas">
+
+  <img src="https://depressed-teal-8hb9i6zdx5-ui21dv62kt.edgeone.dev/%E1%84%89%E1%85%B3%E1%84%8F%E1%85%B3%E1%84%85%E1%85%B5%E1%86%AB%E1%84%89%E1%85%A3%E1%86%BA%202025-12-08%20%E1%84%8B%E1%85%A9%E1%84%92%E1%85%AE%2012.20.37.png" class="top-left-image" />
+
+  <div class="clear-btn" onclick="clearTexts()"></div>
+
+  <div class="story-box">
+    <div class="circle-btn" onclick="addRing()"><img src="https://current-aqua-zyv9bk76ch-ra4btius04.edgeone.dev/1-1.png"></div>
+    <div class="circle-btn" onclick="addRing()"><img src="https://current-aqua-zyv9bk76ch-ra4btius04.edgeone.dev/1-1.png"></div>
+    <div class="circle-btn" onclick="addRing()"><img src="https://current-aqua-zyv9bk76ch-ra4btius04.edgeone.dev/1-1.png"></div>
+    <div class="story-text">Story</div>
+  </div>
+
+  <div id="right-text-box"></div>
+  <div id="left-text-box"></div>
+
+  <img src="https://standard-olive-7rjtjuzsuz-b2vj54h2z2.edgeone.dev/%E1%84%89%E1%85%B3%E1%84%8F%E1%85%B3%E1%84%85%E1%85%B5%E1%86%AB%E1%84%89%E1%85%A3%E1%86%BA%202025-12-02%20%E1%84%8B%E1%85%A9%E1%84%92%E1%85%AE%2012.46.34.png" class="bottom-right-image" />
+
+</div>
+
+<script>
+const words=["밤이 길게만 느껴지던","시기가 있었어요.","아무도 모르게","마음 한쪽이 무너져 있었고","스스로도 그 상처를 꺼내","들여다볼 용기가 나지 않았죠","그때, 아주 작은","변화 하나가 찾아왔어요","바람처럼 지나가던 어느 날","누군가 건넨 짧은 말 한마디가","마음 속에 남았어요","“괜찮아요.","당신은 계속 잘 버텨오고 있어요.”","그 말은 처음엔 믿기지 않았지만","그날 이후 마음 깊은 곳에서","조금씩 온기가 돌기 시작했어요","울음이 나도, 버겁다고 느껴져도","내 안의 작은 목소리는 말했죠","“이제는 스스로를","안아줘도 괜찮아.”","그날부터 감정은 숨기지 않고","조용히 흘려보내기 시작했어요","슬픔은 이완되고","불안은 조금씩 풀어졌고","내면은 고요함을 되찾았어요","무너졌던 자존은","다시 제 자리를 찾고","비어 보이던 시간 속에","작은 빛이 돌아왔어요","그리고 마침내 나는","알게 되었어요","아픔을 없애는 것이","치유가 아니라","그 아픔을 품고도","스스로를 사랑할 수 있게 되는 것이","치유라는 걸","지나온 상처도, 흔적도, 눈물도","모두 결국 나를 단단하게 만든","이야기가 되었고","나는 다시, 나답게","숨 쉬기 시작했어요"];
+
+let storyIndex = 0; // ★ 순차 진행 추가
+
+window.addEventListener('load',()=>{
+  const ring=document.querySelector('.top-left-image');
+  const clearBtn=document.querySelector('.clear-btn');
+  const canvas=document.querySelector('.canvas');
+
+  const r=ring.getBoundingClientRect();
+  const c=canvas.getBoundingClientRect();
+  clearBtn.style.left=`${r.left+r.width/2 - c.left -40}px`;
+  clearBtn.style.top=`${r.top+r.height/2 - c.top -40}px`;
+
+  const storyText = document.querySelector('.story-text');
+  const leftBox = document.getElementById('left-text-box');
+  const sRect = storyText.getBoundingClientRect();
+  const cRect = canvas.getBoundingClientRect();
+  leftBox.style.top = `${sRect.bottom - cRect.top + 10}px`;
+});
+
+function addRing(){
+  const canvas=document.querySelector('.canvas');
+  const ring=document.createElement('div');
+  ring.className='ring';
+  const r=canvas.getBoundingClientRect();
+
+  ring.style.left=`${Math.random()*(r.width-160 - r.width/2)+r.width/2}px`;
+  ring.style.top=`${Math.random()*(r.height-160)}px`;
+
+  ring.innerText = words[storyIndex];
+  storyIndex = (storyIndex + 1) % words.length;
+
+  canvas.appendChild(ring);
+  setTimeout(()=>burst(ring,true),5500);
+  ring.addEventListener('animationend',()=>ring.remove());
+}
+
+function burst(ring,showText){
+  if(!ring.parentElement)return;
+  const canvas=document.querySelector('.canvas');
+  const r=ring.getBoundingClientRect();
+  const c=canvas.getBoundingClientRect();
+  let cx=r.left+r.width/2 - c.left - 10;
+  const cy=r.top+r.height/2 - c.top;
+
+  for(let i=0;i<18;i++){
+    const p=document.createElement('div');
+    p.className='particle';
+    const a=Math.random()*2*Math.PI;
+    const d=80+Math.random()*60;
+    p.style.setProperty('--dx',`${Math.cos(a)*d}px`);
+    p.style.setProperty('--dy',`${Math.sin(a)*d}px`);
+    p.style.left=`${cx}px`;
+    p.style.top=`${cy}px`;
+    canvas.appendChild(p);
+    p.addEventListener('animationend',()=>p.remove());
+  }
+
+  if(showText){
+    const rightBox=document.getElementById('right-text-box');
+    const leftBox=document.getElementById('left-text-box');
+    const bottomImg=document.querySelector('.bottom-right-image');
+
+    const rightBoxRect = rightBox.getBoundingClientRect();
+    const bottomRect = bottomImg.getBoundingClientRect();
+    const nextLineHeight = 14;
+    const spaceBelow = bottomRect.top - rightBoxRect.top;
+
+    const targetBox = (rightBox.scrollHeight + nextLineHeight > spaceBelow) ? leftBox : rightBox;
+
+    const line=document.createElement('div');
+    line.className='burst-line';
+    line.innerText=ring.innerText;
+    targetBox.appendChild(line);
+  }
+
+  ring.remove();
+}
+
+function clearTexts(){
+  const leftBox = document.getElementById('left-text-box');
+  const rightBox = document.getElementById('right-text-box');
+  const canvas = document.querySelector('.canvas');
+
+  [leftBox, rightBox].forEach(box=>{
+    Array.from(box.children).forEach(child=>{
+      const rect = child.getBoundingClientRect();
+      const c = canvas.getBoundingClientRect();
+      let cx = rect.left - c.left + child.offsetWidth/2 - 130;
+      const cy = rect.top - c.top + child.offsetHeight/2;
+
+      for(let i=0;i<18;i++){
+        const p=document.createElement('div');
+        p.className='particle';
+        const a=Math.random()*2*Math.PI;
+        const d=80+Math.random()*60;
+        p.style.setProperty('--dx',`${Math.cos(a)*d}px`);
+        p.style.setProperty('--dy',`${Math.sin(a)*d}px`);
+        p.style.left=`${cx}px`;
+        p.style.top=`${cy}px`;
+        canvas.appendChild(p);
+        p.addEventListener('animationend',()=>p.remove());
+      }
+    });
+    box.innerHTML='';
+  });
+}
+</script>
+
+</body>
+</html>
